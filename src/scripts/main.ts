@@ -1,3 +1,2 @@
+import "../styles/style.css";
 import 'iconify-icon';
-import '../style/style.css';
-
