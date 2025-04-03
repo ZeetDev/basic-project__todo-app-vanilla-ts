@@ -42,12 +42,12 @@ function handleTaskSubmission() {
 }
 
 function handleShowTodos() {
-    let li = '';
-
     todos.forEach((todo, id) => {
-        li += ` <li class="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
+        const liTag = document.createElement('li');
+        liTag.className = 'flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200';
+        liTag.innerHTML = `
           <div class="flex items-center">
-            <input type="checkbox" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded" id="task-${id}">
+            <input type="checkbox" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded task-checkbox" id="task-${id}" ${todo.status === 'completed' && 'checked'} >
             <label class="ml-3 text-gray-800 cursor-pointer" for="task-${id}">${todo.name}</label>
           </div>
           <div class="flex space-x-2">
@@ -58,12 +58,28 @@ function handleShowTodos() {
               <iconify-icon icon="mdi:delete" width="20" height="20"></iconify-icon>
             </button>
           </div>
-        </li>`;
+        `;
+        const checkInput = liTag.querySelector<HTMLInputElement>('.task-checkbox');
+        if (checkInput) {
+            checkInput.addEventListener('change', (e) => updateStatus(e, id));
+        }
+        todoList?.appendChild(liTag);
     });
+}
 
-    if (todoList) {
-        todoList.innerHTML = li;
+function updateStatus(e: Event, id: number) {
+    const selectedInput = e.target as HTMLInputElement;
+    const taskNameTag = selectedInput.nextElementSibling;
+
+    if (selectedInput.checked) {
+        taskNameTag?.classList.add('line-through');
+        todos[id].status = 'completed';
+    } else {
+        taskNameTag?.classList.remove('line-through');
+        todos[id].status = 'pending';
     }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
 }
 
 handleShowTodos();
