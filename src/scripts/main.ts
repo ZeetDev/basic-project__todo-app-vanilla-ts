@@ -11,6 +11,8 @@ const todoList = document.querySelector<HTMLUListElement>('#todo-list');
 const STORAGE_KEY = 'todo-list';
 
 let todos: Todo[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let editId: number;
+let isEditedTask: boolean = false;
 
 if (taskForm) {
     taskForm.addEventListener('submit', (e) => {
@@ -31,11 +33,18 @@ function handleTaskSubmission() {
     const taskInputTarget = taskInput as HTMLInputElement;
     const taskValue = taskInputTarget.value.trim();
     if (!taskValue) return;
-    const taskInfo: Todo = {
-        name: taskValue,
-        status: 'pending',
-    };
-    todos.push(taskInfo);
+
+    if (!isEditedTask) {
+        const taskInfo: Todo = {
+            name: taskValue,
+            status: 'pending',
+        };
+        todos.push(taskInfo);
+    } else {
+        todos[editId].name = taskValue;
+        isEditedTask = false;
+    }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
     taskInputTarget.value = '';
     handleShowTodos();
@@ -54,7 +63,7 @@ function handleShowTodos() {
             <label class="ml-3 text-gray-800 cursor-pointer ${isTaskCompleted && 'line-through'} " for="task-${id}">${todo.name}</label>
           </div>
           <div class="flex space-x-2">
-            <button class="text-blue-600 hover:text-blue-800">
+            <button class="text-blue-600 hover:text-blue-800" id="task-edit-btn">
               <iconify-icon icon="mdi:pencil" width="20" height="20"></iconify-icon>
             </button>
             <button class="text-red-600 hover:text-red-800" id="task-delete-btn">
@@ -70,6 +79,11 @@ function handleShowTodos() {
         const deleteBtn = liTag.querySelector<HTMLButtonElement>('#task-delete-btn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => handleDeleteTask(id));
+        }
+
+        const editBtn = liTag.querySelector<HTMLInputElement>('#task-edit-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => handleEditTask(id, todo.name));
         }
 
         todoList?.appendChild(liTag);
@@ -89,6 +103,12 @@ function handleUpdateStatus(e: Event, id: number) {
     }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+}
+
+function handleEditTask(id: number, taskName: string) {
+    editId = id;
+    isEditedTask = true;
+    if (taskInput) taskInput.value = taskName;
 }
 
 function handleDeleteTask(deleteId: number) {
