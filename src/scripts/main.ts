@@ -8,6 +8,7 @@ import { Todo } from './interfaces';
 const taskForm = document.querySelector<HTMLFormElement>('#task-form');
 const taskInput = document.querySelector<HTMLInputElement>('#task-input');
 const todoList = document.querySelector<HTMLUListElement>('#todo-list');
+const filterBtns = document.querySelectorAll('.filter-btns > .filter-btn');
 const STORAGE_KEY = 'todo-list';
 
 let todos: Todo[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -50,14 +51,15 @@ function handleTaskSubmission() {
     handleShowTodos();
 }
 
-function handleShowTodos() {
+function handleShowTodos(filter?: string) {
     if (!todoList) return;
     todoList.innerHTML = '';
     todos.forEach((todo, id) => {
         const isTaskCompleted = todo.status === 'completed';
         const liTag = document.createElement('li');
-        liTag.className = 'flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200';
-        liTag.innerHTML = `
+        if (filter === todo.status || filter === 'all') {
+            liTag.className = 'flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200';
+            liTag.innerHTML = `
           <div class="flex items-center">
             <input type="checkbox" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded task-checkbox" id="task-${id}" ${isTaskCompleted && 'checked'} >
             <label class="ml-3 text-gray-800 cursor-pointer ${isTaskCompleted && 'line-through'} " for="task-${id}">${todo.name}</label>
@@ -71,6 +73,8 @@ function handleShowTodos() {
             </button>
           </div>
         `;
+        }
+
         const checkInput = liTag.querySelector<HTMLInputElement>('.task-checkbox');
         if (checkInput) {
             checkInput.addEventListener('change', (e) => handleUpdateStatus(e, id));
@@ -117,4 +121,12 @@ function handleDeleteTask(deleteId: number) {
     handleShowTodos();
 }
 
-handleShowTodos();
+filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+        document.querySelector('.btn-active')?.classList.remove('btn-active');
+        btn.classList.add('btn-active');
+        handleShowTodos(btn.id);
+    });
+});
+
+handleShowTodos('all');

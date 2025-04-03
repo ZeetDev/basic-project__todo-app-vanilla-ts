@@ -5,3 +5,9 @@
 button {
     @apply cursor-pointer;
 }
+
+.filter-btns {
+    .btn-active {
+        @apply rounded bg-indigo-600 text-white hover:bg-indigo-700;
+    }
+}
