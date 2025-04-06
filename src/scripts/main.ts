@@ -9,6 +9,7 @@ const taskForm = document.querySelector<HTMLFormElement>('#task-form');
 const taskInput = document.querySelector<HTMLInputElement>('#task-input');
 const todoList = document.querySelector<HTMLUListElement>('#todo-list');
 const filterBtns = document.querySelectorAll('.filter-btns > .filter-btn');
+const clearAllBtn = document.querySelector('#clear-all-btn');
 const STORAGE_KEY = 'todo-list';
 
 let todos: Todo[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -51,18 +52,29 @@ function handleTaskSubmission() {
     handleShowTodos();
 }
 
-function handleShowTodos(filter?: string) {
+function handleShowTodos(filter: string = 'all') {
     if (!todoList) return;
+
     todoList.innerHTML = '';
-    todos.forEach((todo, id) => {
+
+    const filteredTodos = todos.filter((todo) => filter === 'all' || todo.status === filter);
+
+    if (filteredTodos.length === 0) {
+        const liTag = document.createElement('li');
+        liTag.className = 'flex items-center justify-center p-3 bg-gray-50 rounded border border-gray-200';
+        liTag.innerHTML = `<span class="text-gray-500">No Todos found</span>`;
+        todoList.appendChild(liTag);
+        return;
+    }
+
+    filteredTodos.forEach((todo, id) => {
         const isTaskCompleted = todo.status === 'completed';
         const liTag = document.createElement('li');
-        if (filter === todo.status || filter === 'all') {
-            liTag.className = 'flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200';
-            liTag.innerHTML = `
+        liTag.className = 'flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200';
+        liTag.innerHTML = `
           <div class="flex items-center">
-            <input type="checkbox" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded task-checkbox" id="task-${id}" ${isTaskCompleted && 'checked'} >
-            <label class="ml-3 text-gray-800 cursor-pointer ${isTaskCompleted && 'line-through'} " for="task-${id}">${todo.name}</label>
+            <input type="checkbox" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded task-checkbox" id="task-${id}" ${isTaskCompleted ? 'checked' : ''}>
+            <label class="ml-3 text-gray-800 cursor-pointer ${isTaskCompleted ? 'line-through' : ''}" for="task-${id}">${todo.name}</label>
           </div>
           <div class="flex space-x-2">
             <button class="text-blue-600 hover:text-blue-800" id="task-edit-btn">
@@ -73,24 +85,23 @@ function handleShowTodos(filter?: string) {
             </button>
           </div>
         `;
-        }
 
         const checkInput = liTag.querySelector<HTMLInputElement>('.task-checkbox');
         if (checkInput) {
-            checkInput.addEventListener('change', (e) => handleUpdateStatus(e, id));
+            checkInput.addEventListener('change', (e) => handleUpdateStatus(e, todos.indexOf(todo)));
         }
 
         const deleteBtn = liTag.querySelector<HTMLButtonElement>('#task-delete-btn');
         if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => handleDeleteTask(id));
+            deleteBtn.addEventListener('click', () => handleDeleteTask(todos.indexOf(todo)));
         }
 
         const editBtn = liTag.querySelector<HTMLInputElement>('#task-edit-btn');
         if (editBtn) {
-            editBtn.addEventListener('click', () => handleEditTask(id, todo.name));
+            editBtn.addEventListener('click', () => handleEditTask(todos.indexOf(todo), todo.name));
         }
 
-        todoList?.appendChild(liTag);
+        todoList.appendChild(liTag);
     });
 }
 
@@ -128,5 +139,16 @@ filterBtns.forEach((btn) => {
         handleShowTodos(btn.id);
     });
 });
+
+if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', () => {
+        const isConfirmed = confirm('Are you sure you want to delete all todos?');
+        if (isConfirmed) {
+            todos = [];
+            localStorage.removeItem(STORAGE_KEY);
+            handleShowTodos('all');
+        }
+    });
+}
 
 handleShowTodos('all');
